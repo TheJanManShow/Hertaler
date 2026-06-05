@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>📖 Hertaler — Moderniseer oud Nederlands</title>
 
-  <!-- JSZip voor EPUB lezen/schrijven -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- PDF.js voor PDF-verwerking -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
@@ -76,7 +74,7 @@
       gap: .5rem;
     }
 
-    /* AI Mode selector */
+    /* Mode tabs */
     .mode-tabs {
       display: flex;
       gap: .5rem;
@@ -107,7 +105,7 @@
       color: var(--text);
     }
 
-    /* API key input area */
+    /* API secties */
     .api-section {
       display: none;
       flex-direction: column;
@@ -164,13 +162,89 @@
     .info-box a { color: var(--accent2); text-decoration: none; }
     .info-box a:hover { text-decoration: underline; }
 
-    /* WebLLM model selector */
     .webllm-section {
       display: none;
       flex-direction: column;
       gap: .75rem;
     }
     .webllm-section.visible { display: flex; }
+
+    /* Slider */
+    .slider-section {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    .style-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      outline: none;
+      cursor: pointer;
+    }
+    .style-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4);
+      transition: border-color .2s;
+    }
+    .style-slider::-webkit-slider-thumb:hover {
+      border-color: var(--accent2);
+    }
+    .slider-value-display {
+      text-align: center;
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--text);
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: .4rem .9rem;
+      width: fit-content;
+      margin: 0 auto;
+    }
+
+    /* Taal selector */
+    .lang-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .5rem;
+    }
+    .lang-btn {
+      padding: .55rem .5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      text-align: center;
+      transition: all .2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .lang-btn:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--text);
+    }
 
     /* Drop zone */
     #dropzone {
@@ -306,7 +380,7 @@
       animation: spin .7s linear infinite;
     }
 
-    /* Notification toast */
+    /* Toast */
     #toast {
       position: fixed;
       bottom: 2rem;
@@ -326,7 +400,6 @@
     #toast.success { border-color: var(--success); color: var(--success); }
     #toast.error { border-color: var(--error); color: var(--error); }
 
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -339,7 +412,7 @@
   <p>Moderniseer oud Nederlands in EPUB, HTML of PDF — volledig privé, op je eigen apparaat</p>
 </header>
 
-<!-- STAP 1: AI-modus kiezen -->
+<!-- STAP 1: AI-modus -->
 <div class="card" id="ai-card">
   <h2>⚙️ Stap 1 — Kies AI-modus</h2>
 
@@ -355,7 +428,7 @@
     </div>
   </div>
 
-  <!-- WebLLM sectie -->
+  <!-- WebLLM -->
   <div class="webllm-section visible" id="webllm-section">
     <div class="api-row">
       <label>Model:</label>
@@ -371,7 +444,7 @@
       Het model wordt de eerste keer gedownload (~1.5–5 GB) en daarna gecached in de browser.
       Op iPhone/iPad via Safari 18+ werkt dit via Metal GPU-acceleratie.
       <br><br>
-      Werkt WebGPU niet op jouw apparaat? Kies dan een van de API-opties rechts.
+      Werkt WebGPU niet op jouw apparaat? Kies dan een van de API-opties.
     </div>
     <button onclick="testWebGPU()" style="
       background:var(--surface2); border:1px solid var(--border); color:var(--text);
@@ -380,7 +453,7 @@
     <div id="webgpu-result" style="font-size:.82rem; color:var(--muted);"></div>
   </div>
 
-  <!-- OpenRouter sectie -->
+  <!-- OpenRouter -->
   <div class="api-section" id="openrouter-section">
     <div class="api-row">
       <label>API Key:</label>
@@ -403,7 +476,7 @@
     </div>
   </div>
 
-  <!-- PPQ.ai sectie -->
+  <!-- PPQ.ai -->
   <div class="api-section" id="ppq-section">
     <div class="api-row">
       <label>API Key:</label>
@@ -426,9 +499,44 @@
   </div>
 </div>
 
-<!-- STAP 2: Bestand droppen -->
+<!-- STAP 2: Taalstijl slider -->
+<div class="card" id="style-card">
+  <h2>🎚️ Stap 2 — Taalstijl</h2>
+  <div class="slider-section">
+    <div class="slider-labels">
+      <span>👶 Kinderlijk</span>
+      <span>📚 Eenvoudig</span>
+      <span>🗣️ Neutraal</span>
+      <span>💼 Formeel</span>
+      <span>🔬 Wetenschappelijk</span>
+    </div>
+    <input
+      type="range"
+      id="style-slider"
+      class="style-slider"
+      min="1" max="5" value="3" step="1"
+      oninput="updateSliderDisplay(this.value)"
+    />
+    <div class="slider-value-display" id="slider-display">🗣️ Neutraal modern</div>
+  </div>
+</div>
+
+<!-- STAP 3: Uitvoertaal -->
+<div class="card" id="lang-card">
+  <h2>🌍 Stap 3 — Uitvoertaal</h2>
+  <div class="lang-grid">
+    <button class="lang-btn active" data-lang="nl" onclick="setLang(this)">🇳🇱 Nederlands</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang(this)">🇬🇧 Engels</button>
+    <button class="lang-btn" data-lang="de" onclick="setLang(this)">🇩🇪 Duits</button>
+    <button class="lang-btn" data-lang="es" onclick="setLang(this)">🇪🇸 Spaans</button>
+    <button class="lang-btn" data-lang="zh" onclick="setLang(this)">🇨🇳 Chinees</button>
+    <button class="lang-btn" data-lang="pl" onclick="setLang(this)">🇵🇱 Pools</button>
+  </div>
+</div>
+
+<!-- STAP 4: Bestand droppen -->
 <div class="card" id="upload-card">
-  <h2>📂 Stap 2 — Drop je bestand</h2>
+  <h2>📂 Stap 4 — Drop je bestand</h2>
   <div id="dropzone">
     <input type="file" id="file-input" accept=".epub,.html,.htm,.pdf" />
     <div class="drop-icon">📄</div>
@@ -437,9 +545,9 @@
   </div>
 </div>
 
-<!-- STAP 3: Voortgang -->
+<!-- STAP 5: Voortgang -->
 <div class="card" id="progress-card">
-  <h2>⚡ Stap 3 — Hertaling bezig…</h2>
+  <h2>⚡ Stap 5 — Hertaling bezig…</h2>
   <div class="progress-steps" id="steps-container"></div>
   <div class="progress-bar-wrap">
     <div class="progress-bar" id="progress-bar"></div>
@@ -447,9 +555,9 @@
   <div class="log-box" id="log-box"></div>
 </div>
 
-<!-- STAP 4: Download -->
+<!-- STAP 6: Download -->
 <div class="card" id="download-card">
-  <h2>✅ Stap 4 — Klaar!</h2>
+  <h2>✅ Stap 6 — Klaar!</h2>
   <p style="color:var(--muted); font-size:.9rem;">Je hertaalde EPUB is gereed. Opmaak, afbeeldingen en structuur zijn bewaard.</p>
   <div class="stats-row" id="stats-row"></div>
   <div style="display:flex; gap:.75rem; flex-wrap:wrap; margin-top:.75rem;">
@@ -464,27 +572,48 @@
 
 <script>
 // ============================================================
-// CONFIGURATIE & STATE
+// INIT
 // ============================================================
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-let currentMode = 'webllm';
-let webllmEngine = null;
-let webllmLoading = false;
-let originalFilename = '';
-let processedEpubBlob = null;
+// ============================================================
+// STATE
+// ============================================================
+let currentMode        = 'webllm';
+let currentStyleLevel  = 3;
+let currentOutputLang  = 'nl';
+let webllmEngine       = null;
+let originalFilename   = '';
+let processedEpubBlob  = null;
+
+const STYLE_LEVELS = {
+  1: { label: '👶 Kinderlijk',       hint: 'Gebruik heel eenvoudige, korte zinnen geschikt voor kinderen van 8-10 jaar. Vermijd moeilijke woorden volledig.' },
+  2: { label: '📚 Eenvoudig',        hint: 'Gebruik eenvoudige, toegankelijke taal voor een breed publiek. Korte zinnen, geen jargon.' },
+  3: { label: '🗣️ Neutraal modern',  hint: 'Gebruik neutraal, modern taalgebruik. Helder en vlot leesbaar voor een gemiddelde volwassene.' },
+  4: { label: '💼 Formeel',          hint: 'Gebruik formeel, verzorgd taalgebruik zoals in zakelijke of officiële documenten.' },
+  5: { label: '🔬 Wetenschappelijk', hint: 'Gebruik wetenschappelijk en vakkundig taalgebruik met technische terminologie waar passend.' },
+};
+
+const LANG_NAMES = {
+  nl: 'Nederlands',
+  en: 'Engels',
+  de: 'Duits',
+  es: 'Spaans',
+  zh: 'Chinees',
+  pl: 'Pools',
+};
 
 const STEPS = [
-  { id: 'parse',    icon: '📖', label: 'Bestand inlezen & parseren' },
-  { id: 'extract',  icon: '📝', label: 'Tekst extraheren per hoofdstuk' },
-  { id: 'ai',       icon: '🤖', label: 'AI hertaling uitvoeren' },
-  { id: 'rebuild',  icon: '🔧', label: 'EPUB herbouwen met moderne tekst' },
-  { id: 'pack',     icon: '📦', label: 'EPUB inpakken & finaliseren' },
+  { id: 'parse',   icon: '📖', label: 'Bestand inlezen & parseren' },
+  { id: 'extract', icon: '📝', label: 'Tekst extraheren per hoofdstuk' },
+  { id: 'ai',      icon: '🤖', label: 'AI hertaling uitvoeren' },
+  { id: 'rebuild', icon: '🔧', label: 'EPUB herbouwen met moderne tekst' },
+  { id: 'pack',    icon: '📦', label: 'EPUB inpakken & finaliseren' },
 ];
 
 // ============================================================
-// UI HELPERS
+// UI — MODUS
 // ============================================================
 function setMode(mode) {
   currentMode = mode;
@@ -495,6 +624,26 @@ function setMode(mode) {
   document.getElementById('ppq-section').classList.toggle('visible', mode === 'ppq');
 }
 
+// ============================================================
+// UI — SLIDER
+// ============================================================
+function updateSliderDisplay(val) {
+  currentStyleLevel = parseInt(val);
+  document.getElementById('slider-display').textContent = STYLE_LEVELS[currentStyleLevel].label;
+}
+
+// ============================================================
+// UI — TAAL
+// ============================================================
+function setLang(btn) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentOutputLang = btn.dataset.lang;
+}
+
+// ============================================================
+// UI — HELPERS
+// ============================================================
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -515,11 +664,11 @@ function setProgress(pct) {
 function renderSteps(activeId = null, doneIds = [], errorId = null) {
   const container = document.getElementById('steps-container');
   container.innerHTML = STEPS.map(s => {
-    let cls = 'step';
+    let cls  = 'step';
     let icon = s.icon;
-    if (doneIds.includes(s.id)) { cls += ' done'; icon = '✅'; }
-    else if (s.id === errorId) { cls += ' error-step'; icon = '❌'; }
-    else if (s.id === activeId) { cls += ' active'; icon = `<span class="spinner"></span>`; }
+    if (doneIds.includes(s.id))  { cls += ' done';       icon = '✅'; }
+    else if (s.id === errorId)   { cls += ' error-step'; icon = '❌'; }
+    else if (s.id === activeId)  { cls += ' active';     icon = `<span class="spinner"></span>`; }
     return `<div class="${cls}">
       <span class="step-icon">${icon}</span>
       <span class="step-label">${s.label}</span>
@@ -530,13 +679,17 @@ function renderSteps(activeId = null, doneIds = [], errorId = null) {
 function resetApp() {
   document.getElementById('progress-card').classList.remove('visible');
   document.getElementById('download-card').classList.remove('visible');
-  document.getElementById('upload-card').style.display = '';
-  document.getElementById('ai-card').style.display = '';
-  document.getElementById('log-box').innerHTML = '';
-  document.getElementById('stats-row').innerHTML = '';
+  document.getElementById('upload-card').style.display   = '';
+  document.getElementById('ai-card').style.display       = '';
+  document.getElementById('style-card').style.display    = '';
+  document.getElementById('lang-card').style.display     = '';
+  document.getElementById('log-box').innerHTML           = '';
+  document.getElementById('stats-row').innerHTML         = '';
   setProgress(0);
   processedEpubBlob = null;
 }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ============================================================
 // WEBGPU TEST
@@ -544,7 +697,7 @@ function resetApp() {
 async function testWebGPU() {
   const el = document.getElementById('webgpu-result');
   if (!navigator.gpu) {
-    el.innerHTML = '❌ WebGPU wordt <strong>niet ondersteund</strong> op dit apparaat/browser. Gebruik Chrome 113+ of Safari 18+.';
+    el.innerHTML = '❌ WebGPU wordt <strong>niet ondersteund</strong> op dit apparaat/browser.';
     el.style.color = 'var(--error)';
     return;
   }
@@ -562,7 +715,7 @@ async function testWebGPU() {
 // ============================================================
 // DROP ZONE
 // ============================================================
-const dropzone = document.getElementById('dropzone');
+const dropzone  = document.getElementById('dropzone');
 const fileInput = document.getElementById('file-input');
 
 dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
@@ -587,7 +740,6 @@ async function handleFile(file) {
     return;
   }
 
-  // Valideer API-sleutel indien nodig
   if (currentMode === 'openrouter') {
     const key = document.getElementById('openrouter-key').value.trim();
     if (!key) { showToast('❌ Voer eerst je OpenRouter API-sleutel in', 'error'); return; }
@@ -600,8 +752,11 @@ async function handleFile(file) {
   }
 
   originalFilename = file.name.replace(/\.[^.]+$/, '');
-  document.getElementById('upload-card').style.display = 'none';
-  document.getElementById('ai-card').style.display = 'none';
+
+  document.getElementById('upload-card').style.display  = 'none';
+  document.getElementById('ai-card').style.display      = 'none';
+  document.getElementById('style-card').style.display   = 'none';
+  document.getElementById('lang-card').style.display    = 'none';
 
   const progressCard = document.getElementById('progress-card');
   progressCard.classList.add('visible');
@@ -612,8 +767,10 @@ async function handleFile(file) {
     // STAP 1: Parse
     renderSteps('parse', []);
     log(`Bestand geladen: ${file.name} (${(file.size/1024).toFixed(0)} KB)`);
+    log(`Taalstijl: ${STYLE_LEVELS[currentStyleLevel].label} | Taal: ${LANG_NAMES[currentOutputLang]}`);
+
     let chapters = [];
-    let epubZip = null;
+    let epubZip  = null;
     let epubMeta = {};
 
     if (ext === 'epub') {
@@ -630,7 +787,6 @@ async function handleFile(file) {
     renderSteps('extract', ['parse']);
     setProgress(15);
 
-    // STAP 2: Extract (al gedaan in parse, visuele stap)
     await sleep(300);
     renderSteps('ai', ['parse','extract']);
     setProgress(20);
@@ -638,16 +794,21 @@ async function handleFile(file) {
     // STAP 3: AI hertaling
     log(`🤖 Start hertaling via ${currentMode}...`);
 
-    // Laad WebLLM indien nodig
     if (currentMode === 'webllm' && !webllmEngine) {
-      log('⬇️ WebLLM model laden (eerste keer kan ~minuten duren)...');
+      log('⬇️ WebLLM model laden (eerste keer kan enkele minuten duren)...');
       await loadWebLLM();
     }
 
+    const systemPrompt  = buildSystemPrompt();
     const totalChapters = chapters.length;
+
     for (let i = 0; i < chapters.length; i++) {
       log(`Hoofdstuk ${i+1}/${totalChapters}: hertaling...`);
-      chapters[i].modernText = await modernizeText(chapters[i].rawText, chapters[i].html);
+      chapters[i].modernText = await modernizeText(
+        chapters[i].rawText,
+        chapters[i].html,
+        systemPrompt
+      );
       setProgress(20 + Math.round((i+1)/totalChapters * 55));
     }
 
@@ -681,77 +842,67 @@ async function handleFile(file) {
   }
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
 // ============================================================
 // EPUB PARSER
 // ============================================================
 async function parseEpub(file) {
   const arrayBuffer = await file.arrayBuffer();
-  const zip = await JSZip.loadAsync(arrayBuffer);
-  const chapters = [];
-  const meta = {};
+  const zip         = await JSZip.loadAsync(arrayBuffer);
+  const chapters    = [];
+  const meta        = {};
+  const parser      = new DOMParser();
 
-  // Lees container.xml
-  const containerXml = await zip.file('META-INF/container.xml').async('string');
-  const parser = new DOMParser();
-  const containerDoc = parser.parseFromString(containerXml, 'application/xml');
-  const rootfilePath = containerDoc.querySelector('rootfile')?.getAttribute('full-path');
+  const containerXml  = await zip.file('META-INF/container.xml').async('string');
+  const containerDoc  = parser.parseFromString(containerXml, 'application/xml');
+  const rootfilePath  = containerDoc.querySelector('rootfile')?.getAttribute('full-path');
   if (!rootfilePath) throw new Error('Geen rootfile gevonden in EPUB');
 
-  // Lees OPF
   const opfContent = await zip.file(rootfilePath).async('string');
-  const opfDoc = parser.parseFromString(opfContent, 'application/xml');
-  const opfDir = rootfilePath.includes('/') ? rootfilePath.substring(0, rootfilePath.lastIndexOf('/') + 1) : '';
+  const opfDoc     = parser.parseFromString(opfContent, 'application/xml');
+  const opfDir     = rootfilePath.includes('/')
+    ? rootfilePath.substring(0, rootfilePath.lastIndexOf('/') + 1)
+    : '';
 
-  // Metadata
-  meta.title = opfDoc.querySelector('metadata > title, metadata > dc\\:title')?.textContent?.trim() || 'Onbekend';
-  meta.author = opfDoc.querySelector('metadata > creator, metadata > dc\\:creator')?.textContent?.trim() || 'Onbekend';
-  meta.opfDir = opfDir;
+  meta.title   = opfDoc.querySelector('metadata > title, metadata > dc\\:title')?.textContent?.trim()   || 'Onbekend';
+  meta.author  = opfDoc.querySelector('metadata > creator, metadata > dc\\:creator')?.textContent?.trim() || 'Onbekend';
+  meta.opfDir  = opfDir;
   meta.opfPath = rootfilePath;
 
-  // Manifest: bouw id→href map
   const manifestItems = {};
   opfDoc.querySelectorAll('manifest > item').forEach(item => {
     manifestItems[item.getAttribute('id')] = {
-      href: item.getAttribute('href'),
+      href:      item.getAttribute('href'),
       mediaType: item.getAttribute('media-type'),
     };
   });
 
-  // Spine: leesvolgorde
   const spineItems = [];
   opfDoc.querySelectorAll('spine > itemref').forEach(ref => {
     const idref = ref.getAttribute('idref');
     if (manifestItems[idref]) spineItems.push({ id: idref, ...manifestItems[idref] });
   });
 
-  // Lees elk hoofdstuk
   for (let i = 0; i < spineItems.length; i++) {
-    const item = spineItems[i];
+    const item     = spineItems[i];
     const fullPath = opfDir + item.href;
-    const zipFile = zip.file(fullPath) || zip.file(item.href);
+    const zipFile  = zip.file(fullPath) || zip.file(item.href);
     if (!zipFile) continue;
 
     const htmlContent = await zipFile.async('string');
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-
-    // Extraheer leesbare tekst (body tekst, geen scripts/styles)
-    const body = doc.body;
+    const doc         = parser.parseFromString(htmlContent, 'text/html');
+    const body        = doc.body;
     if (!body) continue;
 
-    // Verwijder scripts en styles voor tekstextractie
     body.querySelectorAll('script, style').forEach(el => el.remove());
     const rawText = body.innerText || body.textContent || '';
-
-    if (rawText.trim().length < 50) continue; // Skip lege/korte bestanden
+    if (rawText.trim().length < 50) continue;
 
     chapters.push({
-      id: item.id,
-      href: item.href,
+      id:       item.id,
+      href:     item.href,
       fullPath,
-      html: htmlContent,
-      rawText: rawText.trim(),
+      html:     htmlContent,
+      rawText:  rawText.trim(),
       modernText: null,
     });
   }
@@ -763,18 +914,18 @@ async function parseEpub(file) {
 // HTML PARSER
 // ============================================================
 async function parseHtml(file) {
-  const text = await file.text();
+  const text   = await file.text();
   const parser = new DOMParser();
-  const doc = parser.parseFromString(text, 'text/html');
+  const doc    = parser.parseFromString(text, 'text/html');
   doc.querySelectorAll('script, style').forEach(el => el.remove());
   const rawText = doc.body?.innerText || doc.body?.textContent || text;
 
   return [{
-    id: 'chapter-1',
-    href: 'chapter-1.xhtml',
-    fullPath: 'chapter-1.xhtml',
-    html: text,
-    rawText: rawText.trim(),
+    id:         'chapter-1',
+    href:       'chapter-1.xhtml',
+    fullPath:   'chapter-1.xhtml',
+    html:       text,
+    rawText:    rawText.trim(),
     modernText: null,
   }];
 }
@@ -783,30 +934,29 @@ async function parseHtml(file) {
 // PDF PARSER
 // ============================================================
 async function parsePdf(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const chapters = [];
+  const arrayBuffer    = await file.arrayBuffer();
+  const pdf            = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const chapters       = [];
   const pagesPerChapter = 10;
 
-  let chunkText = '';
+  let chunkText  = '';
   let chunkStart = 1;
 
   for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p);
+    const page    = await pdf.getPage(p);
     const content = await page.getTextContent();
-    const pageText = content.items.map(i => i.str).join(' ');
-    chunkText += pageText + '\n\n';
+    chunkText    += content.items.map(i => i.str).join(' ') + '\n\n';
 
     if (p % pagesPerChapter === 0 || p === pdf.numPages) {
       chapters.push({
-        id: `chapter-${chunkStart}`,
-        href: `chapter-${chunkStart}.xhtml`,
-        fullPath: `chapter-${chunkStart}.xhtml`,
-        html: `<html><body><p>${chunkText.replace(/\n\n/g,'</p><p>').replace(/\n/g,' ')}</p></body></html>`,
-        rawText: chunkText.trim(),
+        id:         `chapter-${chunkStart}`,
+        href:       `chapter-${chunkStart}.xhtml`,
+        fullPath:   `chapter-${chunkStart}.xhtml`,
+        html:       `<html><body><p>${chunkText.replace(/\n\n/g,'</p><p>').replace(/\n/g,' ')}</p></body></html>`,
+        rawText:    chunkText.trim(),
         modernText: null,
       });
-      chunkText = '';
+      chunkText  = '';
       chunkStart = p + 1;
     }
   }
@@ -818,13 +968,12 @@ async function parsePdf(file) {
 // WEBLLM LADEN
 // ============================================================
 async function loadWebLLM() {
-  if (!navigator.gpu) throw new Error('WebGPU niet beschikbaar op dit apparaat. Kies een API-modus.');
+  if (!navigator.gpu) throw new Error('WebGPU niet beschikbaar. Kies een API-modus.');
 
-  // Dynamisch WebLLM laden via CDN
   if (!window.webllm) {
     await new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.type = 'module';
+      s.type  = 'module';
       s.textContent = `
         import * as webllm from 'https://esm.run/@mlc-ai/web-llm';
         window.webllm = webllm;
@@ -836,48 +985,59 @@ async function loadWebLLM() {
     });
   }
 
-  const modelId = document.getElementById('webllm-model').value;
+  const modelId    = document.getElementById('webllm-model').value;
   log(`📥 Model laden: ${modelId}`);
 
   webllmEngine = await window.webllm.CreateMLCEngine(modelId, {
-    initProgressCallback: (report) => {
-      log(`⬇️ ${report.text}`);
-    }
+    initProgressCallback: (report) => log(`⬇️ ${report.text}`),
   });
 
   log('✅ WebLLM model geladen!');
 }
 
 // ============================================================
+// SYSTEM PROMPT BUILDER
+// ============================================================
+function buildSystemPrompt() {
+  const styleHint     = STYLE_LEVELS[currentStyleLevel].hint;
+  const langName      = LANG_NAMES[currentOutputLang];
+  const isTranslation = currentOutputLang !== 'nl';
+
+  return `Je bent een expert tekstbewerker.
+Je taak: herschrijf de gegeven (mogelijk verouderde) Nederlandse tekst.
+
+TAALSTIJL: ${styleHint}
+
+UITVOERTAAL: Schrijf de volledige output in het ${langName}.${isTranslation
+    ? `\nVertaal dus van het (oud) Nederlands naar het ${langName}.`
+    : ''}
+
+REGELS:
+- Behoud de VOLLEDIGE betekenis en inhoud
+- Bewaar namen, titels en plaatsnamen${isTranslation ? ' (translitereer waar gebruikelijk)' : ' ongewijzigd'}
+- Bewaar de alinea-indeling
+- Geef ALLEEN de herschreven tekst terug, zonder uitleg of commentaar`;
+}
+
+// ============================================================
 // AI HERTALING
 // ============================================================
-const SYSTEM_PROMPT = `Je bent een expert in het moderniseren van oud Nederlands naar hedendaags Nederlands.
-Je taak: herschrijf de gegeven tekst in modern, vloeiend Nederlands.
-- Behoud de VOLLEDIGE betekenis, inhoud en toon
-- Vervang archaïsche woorden en zinsconstructies door moderne equivalenten
-- Bewaar namen, titels, plaatsnamen en eigennamen ongewijzigd
-- Bewaar alinea-indeling
-- Geef ALLEEN de herschreven tekst terug, zonder uitleg of commentaar`;
-
-async function modernizeText(rawText, originalHtml) {
-  // Splits lange teksten in chunks van max ~1500 woorden
-  const chunks = splitIntoChunks(rawText, 1200);
+async function modernizeText(rawText, originalHtml, systemPrompt) {
+  const chunks       = splitIntoChunks(rawText, 1200);
   const modernChunks = [];
 
   for (const chunk of chunks) {
     if (chunk.trim().length < 20) { modernChunks.push(chunk); continue; }
-    const modern = await callAI(chunk);
+    const modern = await callAI(chunk, systemPrompt);
     modernChunks.push(modern);
   }
 
   const modernText = modernChunks.join('\n\n');
-
-  // Injecteer moderne tekst terug in de HTML-structuur
   return injectModernTextIntoHtml(originalHtml, rawText, modernText);
 }
 
 function splitIntoChunks(text, maxWords) {
-  const words = text.split(/\s+/);
+  const words  = text.split(/\s+/);
   const chunks = [];
   for (let i = 0; i < words.length; i += maxWords) {
     chunks.push(words.slice(i, i + maxWords).join(' '));
@@ -885,43 +1045,43 @@ function splitIntoChunks(text, maxWords) {
   return chunks;
 }
 
-async function callAI(text) {
-  if (currentMode === 'webllm') return callWebLLM(text);
-  if (currentMode === 'openrouter') return callOpenRouter(text);
-  if (currentMode === 'ppq') return callPPQ(text);
+async function callAI(text, systemPrompt) {
+  if (currentMode === 'webllm')     return callWebLLM(text, systemPrompt);
+  if (currentMode === 'openrouter') return callOpenRouter(text, systemPrompt);
+  if (currentMode === 'ppq')        return callPPQ(text, systemPrompt);
   throw new Error('Onbekende AI-modus');
 }
 
-async function callWebLLM(text) {
+async function callWebLLM(text, systemPrompt) {
   if (!webllmEngine) throw new Error('WebLLM niet geladen');
   const reply = await webllmEngine.chat.completions.create({
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `Moderniseer deze tekst:\n\n${text}` }
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: `Bewerk deze tekst:\n\n${text}` },
     ],
     temperature: 0.3,
-    max_tokens: 2048,
+    max_tokens:  2048,
   });
   return reply.choices[0].message.content.trim();
 }
 
-async function callOpenRouter(text) {
-  const key = sessionStorage.getItem('or_key') || document.getElementById('openrouter-key').value.trim();
+async function callOpenRouter(text, systemPrompt) {
+  const key   = sessionStorage.getItem('or_key') || document.getElementById('openrouter-key').value.trim();
   const model = document.getElementById('openrouter-model').value;
 
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
+    method:  'POST',
     headers: {
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': window.location.href,
+      'Authorization':    `Bearer ${key}`,
+      'Content-Type':     'application/json',
+      'HTTP-Referer':     window.location.href,
       'X-OpenRouter-Title': 'Hertaler NL',
     },
     body: JSON.stringify({
       model,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `Moderniseer deze tekst:\n\n${text}` }
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: `Bewerk deze tekst:\n\n${text}` },
       ],
       temperature: 0.3,
     }),
@@ -935,21 +1095,21 @@ async function callOpenRouter(text) {
   return data.choices[0].message.content.trim();
 }
 
-async function callPPQ(text) {
-  const key = sessionStorage.getItem('ppq_key') || document.getElementById('ppq-key').value.trim();
+async function callPPQ(text, systemPrompt) {
+  const key   = sessionStorage.getItem('ppq_key') || document.getElementById('ppq-key').value.trim();
   const model = document.getElementById('ppq-model').value;
 
   const res = await fetch('https://api.ppq.ai/chat/completions', {
-    method: 'POST',
+    method:  'POST',
     headers: {
       'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
+      'Content-Type':  'application/json',
     },
     body: JSON.stringify({
       model,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `Moderniseer deze tekst:\n\n${text}` }
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: `Bewerk deze tekst:\n\n${text}` },
       ],
       temperature: 0.3,
     }),
@@ -964,44 +1124,36 @@ async function callPPQ(text) {
 }
 
 // ============================================================
-// TEKST TERUGZETTEN IN HTML (structuur bewaren)
+// TEKST TERUGZETTEN IN HTML
 // ============================================================
 function injectModernTextIntoHtml(originalHtml, originalText, modernText) {
   try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(originalHtml, 'text/html');
-
-    // Vervang tekst in tekst-nodes, behoud HTML-structuur
-    const modernParas = modernText.split(/\n\n+/).filter(p => p.trim());
+    const parser        = new DOMParser();
+    const doc           = parser.parseFromString(originalHtml, 'text/html');
+    const modernParas   = modernText.split(/\n\n+/).filter(p => p.trim());
     const originalParas = originalText.split(/\n\n+/).filter(p => p.trim());
 
-    // Bouw een mapping van origineel → modern
     const paraMap = new Map();
-    const minLen = Math.min(originalParas.length, modernParas.length);
+    const minLen  = Math.min(originalParas.length, modernParas.length);
     for (let i = 0; i < minLen; i++) {
       paraMap.set(normalizeWS(originalParas[i]), modernParas[i]);
     }
 
-    // Loop door alle tekst-nodes en vervang waar mogelijk
-    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+    const walker    = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
     while ((node = walker.nextNode())) textNodes.push(node);
 
     for (const tn of textNodes) {
       const normalized = normalizeWS(tn.textContent);
-      if (paraMap.has(normalized)) {
-        tn.textContent = paraMap.get(normalized);
-      }
+      if (paraMap.has(normalized)) tn.textContent = paraMap.get(normalized);
     }
 
-    // Serialiseer terug naar HTML-string
     const serializer = new XMLSerializer();
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' +
-      '<!DOCTYPE html>\n' +
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n' +
       serializer.serializeToString(doc.documentElement);
+
   } catch(e) {
-    // Fallback: vervang body-inhoud met moderne tekst als alinea's
     const modernHtml = modernText
       .split(/\n\n+/)
       .map(p => `<p>${escapeHtml(p.trim())}</p>`)
@@ -1021,48 +1173,39 @@ function escapeHtml(s) {
 }
 
 // ============================================================
-// EPUB HERBOUWEN (originele ZIP, alleen HTML-bestanden vervangen)
+// EPUB HERBOUWEN (originele ZIP)
 // ============================================================
 async function rebuildEpub(zip, chapters, meta) {
-  // Maak een kopie van de ZIP
-  const newZip = new JSZip();
+  const newZip    = new JSZip();
+  const promises  = [];
 
-  // Kopieer ALLE bestanden uit originele ZIP
-  const promises = [];
   zip.forEach((relativePath, file) => {
     promises.push(
-      file.async('arraybuffer').then(data => {
-        newZip.file(relativePath, data);
-      })
+      file.async('arraybuffer').then(data => newZip.file(relativePath, data))
     );
   });
   await Promise.all(promises);
 
-  // Vervang alleen de hertaalde HTML-bestanden
   for (const chapter of chapters) {
-    if (chapter.modernText) {
-      newZip.file(chapter.fullPath, chapter.modernText);
-    }
+    if (chapter.modernText) newZip.file(chapter.fullPath, chapter.modernText);
   }
 
   return await newZip.generateAsync({
-    type: 'blob',
-    mimeType: 'application/epub+zip',
-    compression: 'DEFLATE',
+    type:               'blob',
+    mimeType:           'application/epub+zip',
+    compression:        'DEFLATE',
     compressionOptions: { level: 6 },
   });
 }
 
 // ============================================================
-// EPUB BOUWEN VANUIT HTML/PDF (geen originele ZIP)
+// EPUB BOUWEN VANUIT HTML/PDF
 // ============================================================
 async function buildEpubFromChapters(chapters, meta) {
   const zip = new JSZip();
 
-  // mimetype (MOET eerste bestand zijn, ongecomprimeerd)
   zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
 
-  // META-INF/container.xml
   zip.file('META-INF/container.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
@@ -1070,7 +1213,6 @@ async function buildEpubFromChapters(chapters, meta) {
   </rootfiles>
 </container>`);
 
-  // Manifest items
   const manifestItems = chapters.map((ch, i) =>
     `<item id="chapter${i+1}" href="${ch.href}" media-type="application/xhtml+xml"/>`
   ).join('\n    ');
@@ -1079,13 +1221,12 @@ async function buildEpubFromChapters(chapters, meta) {
     `<itemref idref="chapter${i+1}"/>`
   ).join('\n    ');
 
-  // OPF
   zip.file('OEBPS/content.opf', `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="2.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
     <dc:title>${escapeHtml(meta.title)}</dc:title>
     <dc:creator>${escapeHtml(meta.author)}</dc:creator>
-    <dc:language>nl</dc:language>
+    <dc:language>${currentOutputLang}</dc:language>
     <dc:identifier id="uid">urn:uuid:${crypto.randomUUID()}</dc:identifier>
     <meta name="hertaler" content="Hertaler SPA v1.0"/>
   </metadata>
@@ -1098,7 +1239,6 @@ async function buildEpubFromChapters(chapters, meta) {
   </spine>
 </package>`);
 
-  // NCX (inhoudsopgave)
   const navPoints = chapters.map((ch, i) => `
     <navPoint id="nav${i+1}" playOrder="${i+1}">
       <navLabel><text>Hoofdstuk ${i+1}</text></navLabel>
@@ -1116,53 +1256,60 @@ async function buildEpubFromChapters(chapters, meta) {
   </navMap>
 </ncx>`);
 
-  // Hoofdstuk-bestanden
   for (let i = 0; i < chapters.length; i++) {
-    const ch = chapters[i];
+    const ch      = chapters[i];
     const content = ch.modernText || ch.html;
     zip.file(`OEBPS/${ch.href}`, content);
   }
 
   return await zip.generateAsync({
-    type: 'blob',
-    mimeType: 'application/epub+zip',
-    compression: 'DEFLATE',
+    type:               'blob',
+    mimeType:           'application/epub+zip',
+    compression:        'DEFLATE',
     compressionOptions: { level: 6 },
   });
 }
 
 // ============================================================
-// DOWNLOAD TONEN
+// DOWNLOAD
 // ============================================================
 function showDownload(blob, chapters, originalSize) {
   document.getElementById('progress-card').classList.remove('visible');
   const card = document.getElementById('download-card');
   card.classList.add('visible');
 
-  const url = URL.createObjectURL(blob);
+  const url  = URL.createObjectURL(blob);
   const link = document.getElementById('download-link');
-  link.href = url;
+  link.href     = url;
   link.download = `${originalFilename}_hertaald.epub`;
 
-  const totalWords = chapters.reduce((sum, ch) => sum + (ch.rawText?.split(/\s+/).length || 0), 0);
+  const totalWords = chapters.reduce(
+    (sum, ch) => sum + (ch.rawText?.split(/\s+/).length || 0), 0
+  );
+
   document.getElementById('stats-row').innerHTML = `
     <div class="stat">📄 <strong>${chapters.length}</strong> hoofdstukken</div>
     <div class="stat">📝 <strong>~${totalWords.toLocaleString('nl-NL')}</strong> woorden</div>
     <div class="stat">💾 <strong>${(blob.size/1024).toFixed(0)} KB</strong> EPUB</div>
-    <div class="stat">🤖 <strong>${currentMode === 'webllm' ? 'Lokaal (WebGPU)' : currentMode === 'openrouter' ? 'OpenRouter' : 'PPQ.ai'}</strong></div>
+    <div class="stat">🤖 <strong>${
+      currentMode === 'webllm' ? 'Lokaal (WebGPU)' :
+      currentMode === 'openrouter' ? 'OpenRouter' : 'PPQ.ai'
+    }</strong></div>
+    <div class="stat">🌍 <strong>${LANG_NAMES[currentOutputLang]}</strong></div>
+    <div class="stat">🎚️ <strong>${STYLE_LEVELS[currentStyleLevel].label}</strong></div>
   `;
 
   showToast('✅ Hertaling geslaagd! EPUB is klaar.', 'success');
 }
 
 // ============================================================
-// HERSTEL OPGESLAGEN SLEUTELS
+// HERSTEL SESSIE-SLEUTELS
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
-  const orKey = sessionStorage.getItem('or_key');
+  const orKey  = sessionStorage.getItem('or_key');
   const ppqKey = sessionStorage.getItem('ppq_key');
-  if (orKey) document.getElementById('openrouter-key').value = orKey;
-  if (ppqKey) document.getElementById('ppq-key').value = ppqKey;
+  if (orKey)  document.getElementById('openrouter-key').value = orKey;
+  if (ppqKey) document.getElementById('ppq-key').value        = ppqKey;
 });
 </script>
 </body>
