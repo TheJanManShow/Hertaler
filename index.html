@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📖 Hertaler — Moderniseer oud Nederlands</title>
+
+  <!-- JSZip voor EPUB lezen/schrijven -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- PDF.js voor PDF-verwerking -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--muted);
+      margin-top: .5rem;
+      font-size: .95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    /* AI Mode selector */
+    .mode-tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .mode-tab {
+      flex: 1;
+      min-width: 140px;
+      padding: .6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      text-align: center;
+      transition: all .2s;
+    }
+    .mode-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .mode-tab:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* API key input area */
+    .api-section {
+      display: none;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    .api-section.visible { display: flex; }
+
+    .api-row {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+    .api-row label {
+      font-size: .82rem;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 110px;
+    }
+    .api-row input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .55rem .9rem;
+      color: var(--text);
+      font-size: .9rem;
+      outline: none;
+      font-family: monospace;
+      transition: border .2s;
+    }
+    .api-row input:focus { border-color: var(--accent); }
+
+    .model-select {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .55rem .9rem;
+      color: var(--text);
+      font-size: .9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .info-box {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: .65rem 1rem;
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .info-box a { color: var(--accent2); text-decoration: none; }
+    .info-box a:hover { text-decoration: underline; }
+
+    /* WebLLM model selector */
+    .webllm-section {
+      display: none;
+      flex-direction: column;
+      gap: .75rem;
+    }
+    .webllm-section.visible { display: flex; }
+
+    /* Drop zone */
+    #dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s;
+      position: relative;
+    }
+    #dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(108,99,255,.07);
+    }
+    #dropzone .drop-icon { font-size: 3rem; margin-bottom: .75rem; }
+    #dropzone p { color: var(--muted); font-size: .95rem; }
+    #dropzone strong { color: var(--text); }
+    #dropzone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    /* Progress */
+    #progress-card { display: none; }
+    #progress-card.visible { display: block; }
+
+    .progress-steps { display: flex; flex-direction: column; gap: .6rem; }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .6rem .9rem;
+      border-radius: 8px;
+      background: var(--surface2);
+      font-size: .88rem;
+    }
+    .step-icon { font-size: 1.1rem; min-width: 1.5rem; text-align: center; }
+    .step-label { flex: 1; color: var(--muted); }
+    .step.active .step-label { color: var(--text); }
+    .step.done .step-label { color: var(--success); }
+    .step.error-step .step-label { color: var(--error); }
+
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 99px;
+      height: 6px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      width: 0%;
+      transition: width .4s ease;
+    }
+
+    .log-box {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      font-size: .78rem;
+      font-family: monospace;
+      color: var(--muted);
+      max-height: 120px;
+      overflow-y: auto;
+      margin-top: .75rem;
+      line-height: 1.6;
+    }
+
+    /* Download */
+    #download-card { display: none; }
+    #download-card.visible { display: block; }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: .85rem 2rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity .2s, transform .1s;
+      margin-top: .75rem;
+    }
+    .download-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .download-btn:active { transform: translateY(0); }
+
+    .reset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .7rem 1.5rem;
+      font-size: .9rem;
+      cursor: pointer;
+      margin-top: .5rem;
+      transition: all .2s;
+    }
+    .reset-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    .stats-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: .75rem;
+    }
+    .stat {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: .5rem .9rem;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+    .stat strong { color: var(--text); }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 1rem; height: 1rem;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    /* Notification toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1.5rem;
+      font-size: .88rem;
+      transition: transform .3s ease;
+      z-index: 999;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: var(--success); color: var(--success); }
+    #toast.error { border-color: var(--error); color: var(--error); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📖 Hertaler</h1>
+  <p>Moderniseer oud Nederlands in EPUB, HTML of PDF — volledig privé, op je eigen apparaat</p>
+</header>
+
+<!-- STAP 1: AI-modus kiezen -->
+<div class="card" id="ai-card">
+  <h2>⚙️ Stap 1 — Kies AI-modus</h2>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="webllm" onclick="setMode('webllm')">
+      🖥️ Lokaal (WebLLM/WebGPU)
+    </div>
+    <div class="mode-tab" data-mode="openrouter" onclick="setMode('openrouter')">
+      🌐 OpenRouter API
+    </div>
+    <div class="mode-tab" data-mode="ppq" onclick="setMode('ppq')">
+      🔑 PPQ.ai API
+    </div>
+  </div>
+
+  <!-- WebLLM sectie -->
+  <div class="webllm-section visible" id="webllm-section">
+    <div class="api-row">
+      <label>Model:</label>
+      <select class="model-select" id="webllm-model">
+        <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama 3.2 3B (snel, ~2GB)</option>
+        <option value="Llama-3.1-8B-Instruct-q4f16_1-MLC">Llama 3.1 8B (beter, ~5GB)</option>
+        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5 Mini (compact, ~2.5GB)</option>
+        <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma 2 2B (licht, ~1.5GB)</option>
+      </select>
+    </div>
+    <div class="info-box">
+      ⚠️ Vereist <strong>WebGPU-ondersteuning</strong> (Chrome 113+, Edge 113+, Safari 18+).
+      Het model wordt de eerste keer gedownload (~1.5–5 GB) en daarna gecached in de browser.
+      Op iPhone/iPad via Safari 18+ werkt dit via Metal GPU-acceleratie.
+      <br><br>
+      Werkt WebGPU niet op jouw apparaat? Kies dan een van de API-opties rechts.
+    </div>
+    <button onclick="testWebGPU()" style="
+      background:var(--surface2); border:1px solid var(--border); color:var(--text);
+      border-radius:8px; padding:.5rem 1rem; cursor:pointer; font-size:.85rem; width:fit-content;
+    ">🔍 Test WebGPU-ondersteuning</button>
+    <div id="webgpu-result" style="font-size:.82rem; color:var(--muted);"></div>
+  </div>
+
+  <!-- OpenRouter sectie -->
+  <div class="api-section" id="openrouter-section">
+    <div class="api-row">
+      <label>API Key:</label>
+      <input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off" />
+    </div>
+    <div class="api-row">
+      <label>Model:</label>
+      <select class="model-select" id="openrouter-model">
+        <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B (aanbevolen)</option>
+        <option value="google/gemini-flash-1.5">Gemini Flash 1.5 (snel)</option>
+        <option value="anthropic/claude-3-haiku">Claude 3 Haiku (snel)</option>
+        <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+        <option value="mistralai/mistral-7b-instruct">Mistral 7B (goedkoop)</option>
+      </select>
+    </div>
+    <div class="info-box">
+      🔒 Je API-sleutel wordt <strong>alleen in deze browsersessie</strong> opgeslagen (sessionStorage) en
+      nooit naar een server verstuurd behalve direct naar <a href="https://openrouter.ai" target="_blank">openrouter.ai</a>.
+      Haal een sleutel op via <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>.
+    </div>
+  </div>
+
+  <!-- PPQ.ai sectie -->
+  <div class="api-section" id="ppq-section">
+    <div class="api-row">
+      <label>API Key:</label>
+      <input type="password" id="ppq-key" placeholder="sk-..." autocomplete="off" />
+    </div>
+    <div class="api-row">
+      <label>Model:</label>
+      <select class="model-select" id="ppq-model">
+        <option value="gpt-4o-mini">GPT-4o Mini (snel)</option>
+        <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+      </select>
+    </div>
+    <div class="info-box">
+      🔒 Je API-sleutel wordt <strong>alleen in deze browsersessie</strong> opgeslagen (sessionStorage) en
+      nooit naar een server verstuurd behalve direct naar <a href="https://ppq.ai" target="_blank">ppq.ai</a>.
+      Haal een sleutel op via <a href="https://ppq.ai" target="_blank">ppq.ai</a>.
+    </div>
+  </div>
+</div>
+
+<!-- STAP 2: Bestand droppen -->
+<div class="card" id="upload-card">
+  <h2>📂 Stap 2 — Drop je bestand</h2>
+  <div id="dropzone">
+    <input type="file" id="file-input" accept=".epub,.html,.htm,.pdf" />
+    <div class="drop-icon">📄</div>
+    <p><strong>Sleep een bestand hierheen</strong><br>of klik om te bladeren</p>
+    <p style="margin-top:.5rem; font-size:.8rem; color:var(--muted);">Ondersteund: .epub · .html · .htm · .pdf</p>
+  </div>
+</div>
+
+<!-- STAP 3: Voortgang -->
+<div class="card" id="progress-card">
+  <h2>⚡ Stap 3 — Hertaling bezig…</h2>
+  <div class="progress-steps" id="steps-container"></div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+  <div class="log-box" id="log-box"></div>
+</div>
+
+<!-- STAP 4: Download -->
+<div class="card" id="download-card">
+  <h2>✅ Stap 4 — Klaar!</h2>
+  <p style="color:var(--muted); font-size:.9rem;">Je hertaalde EPUB is gereed. Opmaak, afbeeldingen en structuur zijn bewaard.</p>
+  <div class="stats-row" id="stats-row"></div>
+  <div style="display:flex; gap:.75rem; flex-wrap:wrap; margin-top:.75rem;">
+    <a id="download-link" class="download-btn" download="hertaald.epub">
+      ⬇️ Download EPUB
+    </a>
+    <button class="reset-btn" onclick="resetApp()">🔄 Nieuw bestand</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIGURATIE & STATE
+// ============================================================
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let currentMode = 'webllm';
+let webllmEngine = null;
+let webllmLoading = false;
+let originalFilename = '';
+let processedEpubBlob = null;
+
+const STEPS = [
+  { id: 'parse',    icon: '📖', label: 'Bestand inlezen & parseren' },
+  { id: 'extract',  icon: '📝', label: 'Tekst extraheren per hoofdstuk' },
+  { id: 'ai',       icon: '🤖', label: 'AI hertaling uitvoeren' },
+  { id: 'rebuild',  icon: '🔧', label: 'EPUB herbouwen met moderne tekst' },
+  { id: 'pack',     icon: '📦', label: 'EPUB inpakken & finaliseren' },
+];
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('webllm-section').classList.toggle('visible', mode === 'webllm');
+  document.getElementById('openrouter-section').classList.toggle('visible', mode === 'openrouter');
+  document.getElementById('ppq-section').classList.toggle('visible', mode === 'ppq');
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3500);
+}
+
+function log(msg) {
+  const box = document.getElementById('log-box');
+  box.innerHTML += `<div>${new Date().toLocaleTimeString('nl-NL')} — ${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function renderSteps(activeId = null, doneIds = [], errorId = null) {
+  const container = document.getElementById('steps-container');
+  container.innerHTML = STEPS.map(s => {
+    let cls = 'step';
+    let icon = s.icon;
+    if (doneIds.includes(s.id)) { cls += ' done'; icon = '✅'; }
+    else if (s.id === errorId) { cls += ' error-step'; icon = '❌'; }
+    else if (s.id === activeId) { cls += ' active'; icon = `<span class="spinner"></span>`; }
+    return `<div class="${cls}">
+      <span class="step-icon">${icon}</span>
+      <span class="step-label">${s.label}</span>
+    </div>`;
+  }).join('');
+}
+
+function resetApp() {
+  document.getElementById('progress-card').classList.remove('visible');
+  document.getElementById('download-card').classList.remove('visible');
+  document.getElementById('upload-card').style.display = '';
+  document.getElementById('ai-card').style.display = '';
+  document.getElementById('log-box').innerHTML = '';
+  document.getElementById('stats-row').innerHTML = '';
+  setProgress(0);
+  processedEpubBlob = null;
+}
+
+// ============================================================
+// WEBGPU TEST
+// ============================================================
+async function testWebGPU() {
+  const el = document.getElementById('webgpu-result');
+  if (!navigator.gpu) {
+    el.innerHTML = '❌ WebGPU wordt <strong>niet ondersteund</strong> op dit apparaat/browser. Gebruik Chrome 113+ of Safari 18+.';
+    el.style.color = 'var(--error)';
+    return;
+  }
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) throw new Error('Geen GPU-adapter gevonden');
+    el.innerHTML = `✅ WebGPU beschikbaar! Adapter: <strong>${adapter.name || 'onbekend'}</strong>`;
+    el.style.color = 'var(--success)';
+  } catch(e) {
+    el.innerHTML = `❌ WebGPU fout: ${e.message}`;
+    el.style.color = 'var(--error)';
+  }
+}
+
+// ============================================================
+// DROP ZONE
+// ============================================================
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+// ============================================================
+// HOOFD PIPELINE
+// ============================================================
+async function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['epub','html','htm','pdf'].includes(ext)) {
+    showToast('❌ Ongeldig bestandstype. Gebruik .epub, .html of .pdf', 'error');
+    return;
+  }
+
+  // Valideer API-sleutel indien nodig
+  if (currentMode === 'openrouter') {
+    const key = document.getElementById('openrouter-key').value.trim();
+    if (!key) { showToast('❌ Voer eerst je OpenRouter API-sleutel in', 'error'); return; }
+    sessionStorage.setItem('or_key', key);
+  }
+  if (currentMode === 'ppq') {
+    const key = document.getElementById('ppq-key').value.trim();
+    if (!key) { showToast('❌ Voer eerst je PPQ.ai API-sleutel in', 'error'); return; }
+    sessionStorage.setItem('ppq_key', key);
+  }
+
+  originalFilename = file.name.replace(/\.[^.]+$/, '');
+  document.getElementById('upload-card').style.display = 'none';
+  document.getElementById('ai-card').style.display = 'none';
+
+  const progressCard = document.getElementById('progress-card');
+  progressCard.classList.add('visible');
+  renderSteps();
+  setProgress(0);
+
+  try {
+    // STAP 1: Parse
+    renderSteps('parse', []);
+    log(`Bestand geladen: ${file.name} (${(file.size/1024).toFixed(0)} KB)`);
+    let chapters = [];
+    let epubZip = null;
+    let epubMeta = {};
+
+    if (ext === 'epub') {
+      ({ chapters, zip: epubZip, meta: epubMeta } = await parseEpub(file));
+    } else if (ext === 'html' || ext === 'htm') {
+      chapters = await parseHtml(file);
+      epubMeta = { title: file.name, author: 'Onbekend' };
+    } else if (ext === 'pdf') {
+      chapters = await parsePdf(file);
+      epubMeta = { title: file.name, author: 'Onbekend' };
+    }
+
+    log(`✅ ${chapters.length} hoofdstuk(ken) gevonden`);
+    renderSteps('extract', ['parse']);
+    setProgress(15);
+
+    // STAP 2: Extract (al gedaan in parse, visuele stap)
+    await sleep(300);
+    renderSteps('ai', ['parse','extract']);
+    setProgress(20);
+
+    // STAP 3: AI hertaling
+    log(`🤖 Start hertaling via ${currentMode}...`);
+
+    // Laad WebLLM indien nodig
+    if (currentMode === 'webllm' && !webllmEngine) {
+      log('⬇️ WebLLM model laden (eerste keer kan ~minuten duren)...');
+      await loadWebLLM();
+    }
+
+    const totalChapters = chapters.length;
+    for (let i = 0; i < chapters.length; i++) {
+      log(`Hoofdstuk ${i+1}/${totalChapters}: hertaling...`);
+      chapters[i].modernText = await modernizeText(chapters[i].rawText, chapters[i].html);
+      setProgress(20 + Math.round((i+1)/totalChapters * 55));
+    }
+
+    renderSteps('rebuild', ['parse','extract','ai']);
+    setProgress(78);
+
+    // STAP 4 & 5: Herbouw EPUB
+    log('🔧 EPUB herbouwen...');
+    let epubBlob;
+    if (ext === 'epub' && epubZip) {
+      epubBlob = await rebuildEpub(epubZip, chapters, epubMeta);
+    } else {
+      epubBlob = await buildEpubFromChapters(chapters, epubMeta);
+    }
+
+    renderSteps('pack', ['parse','extract','ai','rebuild']);
+    setProgress(92);
+    await sleep(300);
+
+    renderSteps(null, ['parse','extract','ai','rebuild','pack']);
+    setProgress(100);
+
+    processedEpubBlob = epubBlob;
+    showDownload(epubBlob, chapters, file.size);
+    log('🎉 Klaar!');
+
+  } catch(err) {
+    console.error(err);
+    log(`❌ Fout: ${err.message}`);
+    showToast('❌ Er ging iets mis: ' + err.message, 'error');
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// EPUB PARSER
+// ============================================================
+async function parseEpub(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const chapters = [];
+  const meta = {};
+
+  // Lees container.xml
+  const containerXml = await zip.file('META-INF/container.xml').async('string');
+  const parser = new DOMParser();
+  const containerDoc = parser.parseFromString(containerXml, 'application/xml');
+  const rootfilePath = containerDoc.querySelector('rootfile')?.getAttribute('full-path');
+  if (!rootfilePath) throw new Error('Geen rootfile gevonden in EPUB');
+
+  // Lees OPF
+  const opfContent = await zip.file(rootfilePath).async('string');
+  const opfDoc = parser.parseFromString(opfContent, 'application/xml');
+  const opfDir = rootfilePath.includes('/') ? rootfilePath.substring(0, rootfilePath.lastIndexOf('/') + 1) : '';
+
+  // Metadata
+  meta.title = opfDoc.querySelector('metadata > title, metadata > dc\\:title')?.textContent?.trim() || 'Onbekend';
+  meta.author = opfDoc.querySelector('metadata > creator, metadata > dc\\:creator')?.textContent?.trim() || 'Onbekend';
+  meta.opfDir = opfDir;
+  meta.opfPath = rootfilePath;
+
+  // Manifest: bouw id→href map
+  const manifestItems = {};
+  opfDoc.querySelectorAll('manifest > item').forEach(item => {
+    manifestItems[item.getAttribute('id')] = {
+      href: item.getAttribute('href'),
+      mediaType: item.getAttribute('media-type'),
+    };
+  });
+
+  // Spine: leesvolgorde
+  const spineItems = [];
+  opfDoc.querySelectorAll('spine > itemref').forEach(ref => {
+    const idref = ref.getAttribute('idref');
+    if (manifestItems[idref]) spineItems.push({ id: idref, ...manifestItems[idref] });
+  });
+
+  // Lees elk hoofdstuk
+  for (let i = 0; i < spineItems.length; i++) {
+    const item = spineItems[i];
+    const fullPath = opfDir + item.href;
+    const zipFile = zip.file(fullPath) || zip.file(item.href);
+    if (!zipFile) continue;
+
+    const htmlContent = await zipFile.async('string');
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+
+    // Extraheer leesbare tekst (body tekst, geen scripts/styles)
+    const body = doc.body;
+    if (!body) continue;
+
+    // Verwijder scripts en styles voor tekstextractie
+    body.querySelectorAll('script, style').forEach(el => el.remove());
+    const rawText = body.innerText || body.textContent || '';
+
+    if (rawText.trim().length < 50) continue; // Skip lege/korte bestanden
+
+    chapters.push({
+      id: item.id,
+      href: item.href,
+      fullPath,
+      html: htmlContent,
+      rawText: rawText.trim(),
+      modernText: null,
+    });
+  }
+
+  return { chapters, zip, meta };
+}
+
+// ============================================================
+// HTML PARSER
+// ============================================================
+async function parseHtml(file) {
+  const text = await file.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/html');
+  doc.querySelectorAll('script, style').forEach(el => el.remove());
+  const rawText = doc.body?.innerText || doc.body?.textContent || text;
+
+  return [{
+    id: 'chapter-1',
+    href: 'chapter-1.xhtml',
+    fullPath: 'chapter-1.xhtml',
+    html: text,
+    rawText: rawText.trim(),
+    modernText: null,
+  }];
+}
+
+// ============================================================
+// PDF PARSER
+// ============================================================
+async function parsePdf(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const chapters = [];
+  const pagesPerChapter = 10;
+
+  let chunkText = '';
+  let chunkStart = 1;
+
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(i => i.str).join(' ');
+    chunkText += pageText + '\n\n';
+
+    if (p % pagesPerChapter === 0 || p === pdf.numPages) {
+      chapters.push({
+        id: `chapter-${chunkStart}`,
+        href: `chapter-${chunkStart}.xhtml`,
+        fullPath: `chapter-${chunkStart}.xhtml`,
+        html: `<html><body><p>${chunkText.replace(/\n\n/g,'</p><p>').replace(/\n/g,' ')}</p></body></html>`,
+        rawText: chunkText.trim(),
+        modernText: null,
+      });
+      chunkText = '';
+      chunkStart = p + 1;
+    }
+  }
+
+  return chapters;
+}
+
+// ============================================================
+// WEBLLM LADEN
+// ============================================================
+async function loadWebLLM() {
+  if (!navigator.gpu) throw new Error('WebGPU niet beschikbaar op dit apparaat. Kies een API-modus.');
+
+  // Dynamisch WebLLM laden via CDN
+  if (!window.webllm) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.textContent = `
+        import * as webllm from 'https://esm.run/@mlc-ai/web-llm';
+        window.webllm = webllm;
+        window.dispatchEvent(new Event('webllm-loaded'));
+      `;
+      document.head.appendChild(s);
+      window.addEventListener('webllm-loaded', resolve, { once: true });
+      setTimeout(() => reject(new Error('WebLLM laadtijd overschreden')), 60000);
+    });
+  }
+
+  const modelId = document.getElementById('webllm-model').value;
+  log(`📥 Model laden: ${modelId}`);
+
+  webllmEngine = await window.webllm.CreateMLCEngine(modelId, {
+    initProgressCallback: (report) => {
+      log(`⬇️ ${report.text}`);
+    }
+  });
+
+  log('✅ WebLLM model geladen!');
+}
+
+// ============================================================
+// AI HERTALING
+// ============================================================
+const SYSTEM_PROMPT = `Je bent een expert in het moderniseren van oud Nederlands naar hedendaags Nederlands.
+Je taak: herschrijf de gegeven tekst in modern, vloeiend Nederlands.
+- Behoud de VOLLEDIGE betekenis, inhoud en toon
+- Vervang archaïsche woorden en zinsconstructies door moderne equivalenten
+- Bewaar namen, titels, plaatsnamen en eigennamen ongewijzigd
+- Bewaar alinea-indeling
+- Geef ALLEEN de herschreven tekst terug, zonder uitleg of commentaar`;
+
+async function modernizeText(rawText, originalHtml) {
+  // Splits lange teksten in chunks van max ~1500 woorden
+  const chunks = splitIntoChunks(rawText, 1200);
+  const modernChunks = [];
+
+  for (const chunk of chunks) {
+    if (chunk.trim().length < 20) { modernChunks.push(chunk); continue; }
+    const modern = await callAI(chunk);
+    modernChunks.push(modern);
+  }
+
+  const modernText = modernChunks.join('\n\n');
+
+  // Injecteer moderne tekst terug in de HTML-structuur
+  return injectModernTextIntoHtml(originalHtml, rawText, modernText);
+}
+
+function splitIntoChunks(text, maxWords) {
+  const words = text.split(/\s+/);
+  const chunks = [];
+  for (let i = 0; i < words.length; i += maxWords) {
+    chunks.push(words.slice(i, i + maxWords).join(' '));
+  }
+  return chunks;
+}
+
+async function callAI(text) {
+  if (currentMode === 'webllm') return callWebLLM(text);
+  if (currentMode === 'openrouter') return callOpenRouter(text);
+  if (currentMode === 'ppq') return callPPQ(text);
+  throw new Error('Onbekende AI-modus');
+}
+
+async function callWebLLM(text) {
+  if (!webllmEngine) throw new Error('WebLLM niet geladen');
+  const reply = await webllmEngine.chat.completions.create({
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: `Moderniseer deze tekst:\n\n${text}` }
+    ],
+    temperature: 0.3,
+    max_tokens: 2048,
+  });
+  return reply.choices[0].message.content.trim();
+}
+
+async function callOpenRouter(text) {
+  const key = sessionStorage.getItem('or_key') || document.getElementById('openrouter-key').value.trim();
+  const model = document.getElementById('openrouter-model').value;
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': window.location.href,
+      'X-OpenRouter-Title': 'Hertaler NL',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Moderniseer deze tekst:\n\n${text}` }
+      ],
+      temperature: 0.3,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`OpenRouter fout ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content.trim();
+}
+
+async function callPPQ(text) {
+  const key = sessionStorage.getItem('ppq_key') || document.getElementById('ppq-key').value.trim();
+  const model = document.getElementById('ppq-model').value;
+
+  const res = await fetch('https://api.ppq.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Moderniseer deze tekst:\n\n${text}` }
+      ],
+      temperature: 0.3,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`PPQ.ai fout ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content.trim();
+}
+
+// ============================================================
+// TEKST TERUGZETTEN IN HTML (structuur bewaren)
+// ============================================================
+function injectModernTextIntoHtml(originalHtml, originalText, modernText) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(originalHtml, 'text/html');
+
+    // Vervang tekst in tekst-nodes, behoud HTML-structuur
+    const modernParas = modernText.split(/\n\n+/).filter(p => p.trim());
+    const originalParas = originalText.split(/\n\n+/).filter(p => p.trim());
+
+    // Bouw een mapping van origineel → modern
+    const paraMap = new Map();
+    const minLen = Math.min(originalParas.length, modernParas.length);
+    for (let i = 0; i < minLen; i++) {
+      paraMap.set(normalizeWS(originalParas[i]), modernParas[i]);
+    }
+
+    // Loop door alle tekst-nodes en vervang waar mogelijk
+    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) textNodes.push(node);
+
+    for (const tn of textNodes) {
+      const normalized = normalizeWS(tn.textContent);
+      if (paraMap.has(normalized)) {
+        tn.textContent = paraMap.get(normalized);
+      }
+    }
+
+    // Serialiseer terug naar HTML-string
+    const serializer = new XMLSerializer();
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<!DOCTYPE html>\n' +
+      serializer.serializeToString(doc.documentElement);
+  } catch(e) {
+    // Fallback: vervang body-inhoud met moderne tekst als alinea's
+    const modernHtml = modernText
+      .split(/\n\n+/)
+      .map(p => `<p>${escapeHtml(p.trim())}</p>`)
+      .join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta charset="UTF-8"/></head>
+<body>${modernHtml}</body>
+</html>`;
+  }
+}
+
+function normalizeWS(s) { return s.replace(/\s+/g, ' ').trim(); }
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// EPUB HERBOUWEN (originele ZIP, alleen HTML-bestanden vervangen)
+// ============================================================
+async function rebuildEpub(zip, chapters, meta) {
+  // Maak een kopie van de ZIP
+  const newZip = new JSZip();
+
+  // Kopieer ALLE bestanden uit originele ZIP
+  const promises = [];
+  zip.forEach((relativePath, file) => {
+    promises.push(
+      file.async('arraybuffer').then(data => {
+        newZip.file(relativePath, data);
+      })
+    );
+  });
+  await Promise.all(promises);
+
+  // Vervang alleen de hertaalde HTML-bestanden
+  for (const chapter of chapters) {
+    if (chapter.modernText) {
+      newZip.file(chapter.fullPath, chapter.modernText);
+    }
+  }
+
+  return await newZip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/epub+zip',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
+  });
+}
+
+// ============================================================
+// EPUB BOUWEN VANUIT HTML/PDF (geen originele ZIP)
+// ============================================================
+async function buildEpubFromChapters(chapters, meta) {
+  const zip = new JSZip();
+
+  // mimetype (MOET eerste bestand zijn, ongecomprimeerd)
+  zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+
+  // META-INF/container.xml
+  zip.file('META-INF/container.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+
+  // Manifest items
+  const manifestItems = chapters.map((ch, i) =>
+    `<item id="chapter${i+1}" href="${ch.href}" media-type="application/xhtml+xml"/>`
+  ).join('\n    ');
+
+  const spineItems = chapters.map((ch, i) =>
+    `<itemref idref="chapter${i+1}"/>`
+  ).join('\n    ');
+
+  // OPF
+  zip.file('OEBPS/content.opf', `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>${escapeHtml(meta.title)}</dc:title>
+    <dc:creator>${escapeHtml(meta.author)}</dc:creator>
+    <dc:language>nl</dc:language>
+    <dc:identifier id="uid">urn:uuid:${crypto.randomUUID()}</dc:identifier>
+    <meta name="hertaler" content="Hertaler SPA v1.0"/>
+  </metadata>
+  <manifest>
+    ${manifestItems}
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+  </manifest>
+  <spine toc="ncx">
+    ${spineItems}
+  </spine>
+</package>`);
+
+  // NCX (inhoudsopgave)
+  const navPoints = chapters.map((ch, i) => `
+    <navPoint id="nav${i+1}" playOrder="${i+1}">
+      <navLabel><text>Hoofdstuk ${i+1}</text></navLabel>
+      <content src="${ch.href}"/>
+    </navPoint>`).join('');
+
+  zip.file('OEBPS/toc.ncx', `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:${crypto.randomUUID()}"/>
+  </head>
+  <docTitle><text>${escapeHtml(meta.title)}</text></docTitle>
+  <navMap>${navPoints}
+  </navMap>
+</ncx>`);
+
+  // Hoofdstuk-bestanden
+  for (let i = 0; i < chapters.length; i++) {
+    const ch = chapters[i];
+    const content = ch.modernText || ch.html;
+    zip.file(`OEBPS/${ch.href}`, content);
+  }
+
+  return await zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/epub+zip',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
+  });
+}
+
+// ============================================================
+// DOWNLOAD TONEN
+// ============================================================
+function showDownload(blob, chapters, originalSize) {
+  document.getElementById('progress-card').classList.remove('visible');
+  const card = document.getElementById('download-card');
+  card.classList.add('visible');
+
+  const url = URL.createObjectURL(blob);
+  const link = document.getElementById('download-link');
+  link.href = url;
+  link.download = `${originalFilename}_hertaald.epub`;
+
+  const totalWords = chapters.reduce((sum, ch) => sum + (ch.rawText?.split(/\s+/).length || 0), 0);
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat">📄 <strong>${chapters.length}</strong> hoofdstukken</div>
+    <div class="stat">📝 <strong>~${totalWords.toLocaleString('nl-NL')}</strong> woorden</div>
+    <div class="stat">💾 <strong>${(blob.size/1024).toFixed(0)} KB</strong> EPUB</div>
+    <div class="stat">🤖 <strong>${currentMode === 'webllm' ? 'Lokaal (WebGPU)' : currentMode === 'openrouter' ? 'OpenRouter' : 'PPQ.ai'}</strong></div>
+  `;
+
+  showToast('✅ Hertaling geslaagd! EPUB is klaar.', 'success');
+}
+
+// ============================================================
+// HERSTEL OPGESLAGEN SLEUTELS
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const orKey = sessionStorage.getItem('or_key');
+  const ppqKey = sessionStorage.getItem('ppq_key');
+  if (orKey) document.getElementById('openrouter-key').value = orKey;
+  if (ppqKey) document.getElementById('ppq-key').value = ppqKey;
+});
+</script>
+</body>
+</html>
