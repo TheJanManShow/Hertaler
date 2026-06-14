@@ -93,9 +93,7 @@ function setLang(btn) {
 }
 
 // Handle PPQ use selection (shared vs own)
-function onPPQUseChange(val) {
-  // expose globally for inline event handlers
-  window.onPPQUseChange = onPPQUseChange;
+window.onPPQUseChange = function onPPQUseChange(val) {
   APP.ppqUse = val;
   if (val === 'own') {
     document.getElementById('ppq-own-row').style.display = 'flex';

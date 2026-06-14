@@ -22,6 +22,21 @@
       --warning: #fbbf24;
       --error:   #f87171;
       --radius:  14px;
+
+    /* Light mode overrides */
+    body.light-mode {
+      --bg:      #f7fafc;
+      --surface: #ffffff;
+      --surface2:#f1f5f9;
+      --border:  #e2e8f0;
+      --accent:  #6c63ff;
+      --accent2: #7c3aed;
+      --text:    #0f172a;
+      --muted:   #475569;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error:   #ef4444;
+    }
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -283,15 +298,28 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   </style>
+<script>
+  window.onPPQUseChange = function(){ console.log('onPPQUseChange placeholder'); };
+  window.openTopup = function(){ console.log('openTopup placeholder'); };
+  function toggleTheme(){
+    document.body.classList.toggle('light-mode');
+  }
+</script>
 </head>
 <body>
 
 <!-- VLAGGEN TOPBAR -->
 <div class="topbar">
-  <button class="flag-btn active" data-ui-lang="nl" onclick="setUILang('nl')" title="Nederlands">🇳🇱</button>
-  <button class="flag-btn" data-ui-lang="en" onclick="setUILang('en')" title="English">🇬🇧</button>
-  <button class="flag-btn" data-ui-lang="pl" onclick="setUILang('pl')" title="Polski">🇵🇱</button>
-  <button class="flag-btn" data-ui-lang="es" onclick="setUILang('es')" title="Español">🇪🇸</button>
+  <div style="display:flex;align-items:center;gap:.5rem;">
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+  </div>
+  <div style="flex:1"></div>
+  <div style="display:flex;gap:.4rem;">
+    <button class="flag-btn active" data-ui-lang="nl" onclick="setUILang('nl')" title="Nederlands">🇳🇱</button>
+    <button class="flag-btn" data-ui-lang="en" onclick="setUILang('en')" title="English">🇬🇧</button>
+    <button class="flag-btn" data-ui-lang="pl" onclick="setUILang('pl')" title="Polski">🇵🇱</button>
+    <button class="flag-btn" data-ui-lang="es" onclick="setUILang('es')" title="Español">🇪🇸</button>
+  </div>
 </div>
 
 <header>
@@ -302,9 +330,7 @@
 <!-- STAP 1: AI-modus -->
 <div class="card" id="ai-card">
   <h2>⚙️ <span data-i18n="step1_title"></span></h2>
-  <div class="mode-tabs">
-    <div class="mode-tab active" data-mode="ppq" onclick="setMode('ppq')">🔑 PPQ.ai API</div>
-  </div>
+
 
   <!-- PPQ.ai -->
   <div class="api-section visible" id="ppq-section">
@@ -314,11 +340,6 @@
         <label style="font-weight:600; font-size:.9rem;"><input type="radio" name="ppq-use" value="shared" checked="" onchange="onPPQUseChange(this.value)"> Gebruik gedeelde sleutel</label>
         <label style="font-weight:600; font-size:.9rem;"><input type="radio" name="ppq-use" value="own" onchange="onPPQUseChange(this.value)"> Gebruik eigen sleutel</label>
       </div>
-    </div>
-
-    <div class="api-row" id="ppq-own-row" style="display:none;">
-      <label>API Key:</label>
-      <input type="password" id="ppq-key" placeholder="sk-..." autocomplete="off">
     </div>
 
     <div class="api-row" id="ppq-shared-row">
@@ -334,8 +355,7 @@
     </div>
 
     <div class="info-box">
-      🔒 <span data-i18n="api_privacy"></span>
-      <a href="https://ppq.ai" target="_blank">ppq.ai</a>
+      If you find value in this tool, please pay it forward by topping up the balance. You'll get +5 happiness in your life if you do.
     </div>
   </div>
 </div>
