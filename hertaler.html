@@ -417,28 +417,12 @@
   <h2>⚙️ Stap 1 — Kies AI-modus</h2>
 
   <div class="mode-tabs">
-    <div class="mode-tab active" data-mode="webllm" onclick="setMode('webllm')">
-      🖥️ Lokaal (WebLLM/WebGPU)
-    </div>
-    <div class="mode-tab" data-mode="openrouter" onclick="setMode('openrouter')">
-      🌐 OpenRouter API
-    </div>
-    <div class="mode-tab" data-mode="ppq" onclick="setMode('ppq')">
+    <div class="mode-tab active" data-mode="ppq" onclick="setMode('ppq')">
       🔑 PPQ.ai API
     </div>
   </div>
 
-  <!-- WebLLM -->
-  <div class="webllm-section visible" id="webllm-section">
-    <div class="api-row">
-      <label>Model:</label>
-      <select class="model-select" id="webllm-model">
-        <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama 3.2 3B (snel, ~2GB)</option>
-        <option value="Llama-3.1-8B-Instruct-q4f16_1-MLC">Llama 3.1 8B (beter, ~5GB)</option>
-        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5 Mini (compact, ~2.5GB)</option>
-        <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma 2 2B (licht, ~1.5GB)</option>
-      </select>
-    </div>
+
     <div class="info-box">
       ⚠️ Vereist <strong>WebGPU-ondersteuning</strong> (Chrome 113+, Edge 113+, Safari 18+).
       Het model wordt de eerste keer gedownload (~1.5–5 GB) en daarna gecached in de browser.

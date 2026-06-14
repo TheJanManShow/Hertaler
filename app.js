@@ -6,7 +6,7 @@
 // ── GLOBALE APP STATE ─────────────────────────────────────────
 window.APP = {
   currentUILang:    'nl',
-  currentMode:      'webllm',
+  currentMode:      'ppq',
   currentStyleLevel: 3,
   currentOutputLang: 'nl',
 };
@@ -72,7 +72,7 @@ function setMode(mode) {
   document.querySelectorAll('.mode-tab').forEach(tab =>
     tab.classList.toggle('active', tab.dataset.mode === mode));
   document.getElementById('webllm-section').classList.toggle('visible', mode === 'webllm');
-  document.getElementById('openrouter-section').classList.toggle('visible', mode === 'openrouter');
+  /* openrouter section removed */
   document.getElementById('ppq-section').classList.toggle('visible', mode === 'ppq');
 }
 
@@ -190,11 +190,7 @@ async function handleFile(file) {
   }
 
   // Valideer API-sleutels
-  if (APP.currentMode === 'openrouter') {
-    const key = document.getElementById('openrouter-key').value.trim();
-    if (!key) { showToast('❌ ' + t('toast_no_or_key'), 'error'); return; }
-    sessionStorage.setItem('or_key', key);
-  }
+  /* OpenRouter removed */
   if (APP.currentMode === 'ppq') {
     const key = document.getElementById('ppq-key').value.trim();
     if (!key) { showToast('❌ ' + t('toast_no_ppq_key'), 'error'); return; }

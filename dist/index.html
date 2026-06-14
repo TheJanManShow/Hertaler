@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="nl"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📖 Hertaler</title>
 
   <!-- Externe bibliotheken -->
@@ -290,9 +289,9 @@
 <!-- VLAGGEN TOPBAR -->
 <div class="topbar">
   <button class="flag-btn active" data-ui-lang="nl" onclick="setUILang('nl')" title="Nederlands">🇳🇱</button>
-  <button class="flag-btn"        data-ui-lang="en" onclick="setUILang('en')" title="English">🇬🇧</button>
-  <button class="flag-btn"        data-ui-lang="pl" onclick="setUILang('pl')" title="Polski">🇵🇱</button>
-  <button class="flag-btn"        data-ui-lang="es" onclick="setUILang('es')" title="Español">🇪🇸</button>
+  <button class="flag-btn" data-ui-lang="en" onclick="setUILang('en')" title="English">🇬🇧</button>
+  <button class="flag-btn" data-ui-lang="pl" onclick="setUILang('pl')" title="Polski">🇵🇱</button>
+  <button class="flag-btn" data-ui-lang="es" onclick="setUILang('es')" title="Español">🇪🇸</button>
 </div>
 
 <header>
@@ -311,7 +310,7 @@
   <div class="api-section visible" id="ppq-section">
     <div class="api-row">
       <label>API Key:</label>
-      <input type="password" id="ppq-key" placeholder="sk-..." autocomplete="off" />
+      <input type="password" id="ppq-key" placeholder="sk-..." autocomplete="off">
     </div>
     <div class="info-box">
       🔒 <span data-i18n="api_privacy"></span>
@@ -325,9 +324,7 @@
   <h2>🎚️ <span data-i18n="step2_title"></span></h2>
   <div class="slider-section">
     <div class="slider-labels" id="slider-labels"></div>
-    <input type="range" id="style-slider" class="style-slider"
-      min="1" max="5" value="3" step="1"
-      oninput="updateSliderDisplay(this.value)" />
+    <input type="range" id="style-slider" class="style-slider" min="1" max="5" value="3" step="1" oninput="updateSliderDisplay(this.value)">
     <div class="slider-value-display" id="slider-display"></div>
   </div>
 </div>
@@ -342,7 +339,7 @@
 <div class="card" id="upload-card">
   <h2>📂 <span data-i18n="step4_title"></span></h2>
   <div id="dropzone">
-    <input type="file" id="file-input" accept=".epub,.html,.htm,.pdf,.vtt,.srt" />
+    <input type="file" id="file-input" accept=".epub,.html,.htm,.pdf,.vtt,.srt">
     <div class="drop-icon">📄</div>
     <p><strong data-i18n="drop_title"></strong><br><span data-i18n="drop_sub"></span></p>
     <p style="margin-top:.5rem;font-size:.8rem;color:var(--muted);" data-i18n="drop_formats"></p>
@@ -403,8 +400,8 @@
   <p style="color:var(--muted);font-size:.9rem;" data-i18n="step6_sub"></p>
   <div class="stats-row" id="stats-row"></div>
   <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.75rem;">
-    <a id="download-link"     class="download-btn" download>⬇️ <span data-i18n="btn_download"></span></a>
-    <a id="download-link-alt" class="download-btn secondary" download style="display:none;">
+    <a id="download-link" class="download-btn" download="">⬇️ <span data-i18n="btn_download"></span></a>
+    <a id="download-link-alt" class="download-btn secondary" download="" style="display:none;">
       ⬇️ <span data-i18n="btn_download_alt"></span>
     </a>
     <button class="reset-btn" onclick="resetApp()">🔄 <span data-i18n="btn_reset"></span></button>
@@ -419,5 +416,6 @@
 <script src="ai.js"></script>
 <script src="app.js"></script>
 
-</body>
-</html>
+
+
+</body></html>

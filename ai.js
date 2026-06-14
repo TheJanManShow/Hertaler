@@ -152,7 +152,7 @@ function splitIntoChunks(text, maxWords) {
 async function callAI(text, systemPrompt) {
   const mode = window.APP?.currentMode || 'webllm';
   if (mode === 'webllm')     return callWebLLM(text, systemPrompt);
-  if (mode === 'openrouter') return callOpenRouter(text, systemPrompt);
+  // if (mode === 'openrouter') return callOpenRouter(text, systemPrompt);
   if (mode === 'ppq')        return callPPQ(text, systemPrompt);
   throw new Error('Unknown AI mode');
 }
