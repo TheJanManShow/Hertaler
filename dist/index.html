@@ -309,9 +309,30 @@
   <!-- PPQ.ai -->
   <div class="api-section visible" id="ppq-section">
     <div class="api-row">
+      <label>Gebruik:</label>
+      <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+        <label style="font-weight:600; font-size:.9rem;"><input type="radio" name="ppq-use" value="shared" checked="" onchange="onPPQUseChange(this.value)"> Gebruik gedeelde sleutel</label>
+        <label style="font-weight:600; font-size:.9rem;"><input type="radio" name="ppq-use" value="own" onchange="onPPQUseChange(this.value)"> Gebruik eigen sleutel</label>
+      </div>
+    </div>
+
+    <div class="api-row" id="ppq-own-row" style="display:none;">
       <label>API Key:</label>
       <input type="password" id="ppq-key" placeholder="sk-..." autocomplete="off">
     </div>
+
+    <div class="api-row" id="ppq-shared-row">
+      <label>Gedeeld saldo:</label>
+      <div id="ppq-balance" style="font-weight:700;">—</div>
+    </div>
+
+    <div class="api-row" id="ppq-topup-row">
+      <label></label>
+      <div>
+        <button onclick="openTopup()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.45rem .8rem;cursor:pointer;">💳 Top-up gedeelde sleutel</button>
+      </div>
+    </div>
+
     <div class="info-box">
       🔒 <span data-i18n="api_privacy"></span>
       <a href="https://ppq.ai" target="_blank">ppq.ai</a>

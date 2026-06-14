@@ -150,11 +150,8 @@ function splitIntoChunks(text, maxWords) {
 }
 
 async function callAI(text, systemPrompt) {
-  const mode = window.APP?.currentMode || 'webllm';
-  if (mode === 'webllm')     return callWebLLM(text, systemPrompt);
-  // if (mode === 'openrouter') return callOpenRouter(text, systemPrompt);
-  if (mode === 'ppq')        return callPPQ(text, systemPrompt);
-  throw new Error('Unknown AI mode');
+  // Simplified: always use PPQ.ai
+  return callPPQ(text, systemPrompt);
 }
 
 // ── WEBLLM CALL ───────────────────────────────────────────────
@@ -175,11 +172,7 @@ async function callWebLLM(text, systemPrompt) {
 
 // ── OPENROUTER CALL ───────────────────────────────────────────
 async function callOpenRouter(text, systemPrompt) {
-  const key   = sessionStorage.getItem('or_key') ||
-                document.getElementById('openrouter-key').value.trim();
-  const model = document.getElementById('openrouter-model').value;
-
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  /* OpenRouter call removed */
     method:  'POST',
     headers: {
       'Authorization':      `Bearer ${key}`,
@@ -209,9 +202,10 @@ async function callOpenRouter(text, systemPrompt) {
 
 // ── PPQ.AI CALL ───────────────────────────────────────────────
 async function callPPQ(text, systemPrompt) {
-  const key   = sessionStorage.getItem('ppq_key') ||
-                document.getElementById('ppq-key').value.trim();
-  const model = document.getElementById('ppq-model').value;
+  const key = (window.APP && window.APP.ppqUse === 'own')
+    ? (sessionStorage.getItem('ppq_key') || document.getElementById('ppq-key').value.trim())
+    : (window.APP && window.APP.sharedPPQKey);
+  const model = document.getElementById('ppq-model') ? document.getElementById('ppq-model').value : 'gpt-4o-mini';
 
   const res = await fetch('https://api.ppq.ai/chat/completions', {
     method:  'POST',
@@ -230,9 +224,16 @@ async function callPPQ(text, systemPrompt) {
   });
 
   if (!res.ok) {
+    // If shared key runs out (402 or 402-like), surface helpful message
+    if (res.status === 402) throw new Error('Shared PPQ balance insufficient. Please top-up or use your own key.');
     const err = await res.json().catch(() => ({}));
     throw new Error(`PPQ.ai ${res.status}: ${err.error?.message || res.statusText}`);
   }
+
+  const data = await res.json();
+  addCost(data.usage); // usage.cost zit erin bij PPQ.ai
+  return data.choices[0].message.content.trim();
+}
 
   const data = await res.json();
   addCost(data.usage); // usage.cost zit erin bij PPQ.ai

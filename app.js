@@ -5,6 +5,9 @@
 
 // ── GLOBALE APP STATE ─────────────────────────────────────────
 window.APP = {
+  sharedPPQKey: "sk-shared-placeholder",
+  ppqUse: "shared",
+
   currentUILang:    'nl',
   currentMode:      'ppq',
   currentStyleLevel: 3,
@@ -71,8 +74,7 @@ function setMode(mode) {
   APP.currentMode = mode;
   document.querySelectorAll('.mode-tab').forEach(tab =>
     tab.classList.toggle('active', tab.dataset.mode === mode));
-  document.getElementById('webllm-section').classList.toggle('visible', mode === 'webllm');
-  /* openrouter section removed */
+  // only PPQ remains
   document.getElementById('ppq-section').classList.toggle('visible', mode === 'ppq');
 }
 
@@ -88,6 +90,66 @@ function setLang(btn) {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   APP.currentOutputLang = btn.dataset.lang;
+}
+
+// Handle PPQ use selection (shared vs own)
+function onPPQUseChange(val) {
+  APP.ppqUse = val;
+  if (val === 'own') {
+    document.getElementById('ppq-own-row').style.display = 'flex';
+    document.getElementById('ppq-shared-row').style.display = 'none';
+    document.getElementById('ppq-topup-row').style.display = 'none';
+  } else {
+    document.getElementById('ppq-own-row').style.display = 'none';
+    document.getElementById('ppq-shared-row').style.display = 'flex';
+    document.getElementById('ppq-topup-row').style.display = 'flex';
+    // refresh shared balance
+    refreshSharedBalance();
+  }
+}
+
+async function refreshSharedBalance() {
+  // For demo, try to fetch balance using shared key via /credits/balance
+  try {
+    const res = await fetch('https://api.ppq.ai/credits/balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${APP.sharedPPQKey}` },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) throw new Error('Failed to fetch balance');
+    const data = await res.json();
+    const bal = data.balance ?? data.credits ?? data.credit_balance ?? data.current_period_usage_usd ?? null;
+    document.getElementById('ppq-balance').textContent = bal !== null ? '$' + parseFloat(bal).toFixed(4) : '—';
+  } catch (e) {
+    console.warn('Could not fetch shared PPQ balance', e);
+    document.getElementById('ppq-balance').textContent = 'n/a';
+  }
+}
+
+function openTopup() {
+  // Open a topup dialog — create a lightning topup invoice via PPQ API
+  createTopupInvoice();
+}
+
+async function createTopupInvoice() {
+  // Create a BTC Lightning invoice for $1.00 (as demo) via shared API key
+  try {
+    const res = await fetch('https://api.ppq.ai/topup/create/btc-lightning', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${APP.sharedPPQKey}` },
+      body: JSON.stringify({ amount: 1000, currency: 'SATS' }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Topup creation failed');
+    }
+    const data = await res.json();
+    // Show invoice info in a new window or modal — for simplicity use alert with link
+    const invoice = data.invoice || data.payment_request || JSON.stringify(data);
+    alert('Topup created. Follow the payment steps: ' + invoice);
+  } catch (e) {
+    showToast('Topup failed: ' + e.message, 'error');
+  }
 }
 
 // ── TOAST & LOG ───────────────────────────────────────────────
@@ -148,6 +210,15 @@ async function testWebGPU() {
 
 // ── RESET ─────────────────────────────────────────────────────
 function resetApp() {
+  // Reset PPQ usage state
+  APP.ppqUse = 'shared';
+  document.querySelectorAll('input[name="ppq-use"]').forEach(r => {
+    if (r.value === 'shared') r.checked = true;
+  });
+  if (document.getElementById('ppq-own-row')) document.getElementById('ppq-own-row').style.display = 'none';
+  if (document.getElementById('ppq-shared-row')) document.getElementById('ppq-shared-row').style.display = 'flex';
+  if (document.getElementById('ppq-topup-row')) document.getElementById('ppq-topup-row').style.display = 'flex';
+
   ['progress-card', 'download-card'].forEach(id =>
     document.getElementById(id).classList.remove('visible'));
   ['upload-card', 'ai-card', 'style-card', 'lang-card'].forEach(id =>
@@ -163,6 +234,8 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── DROP ZONE ─────────────────────────────────────────────────
 function initDropZone() {
+  // Initialize PPQ usage UI based on default selection
+  onPPQUseChange('shared');
   const dropzone  = document.getElementById('dropzone');
   const fileInput = document.getElementById('file-input');
 
@@ -332,7 +405,7 @@ function showDownload(primaryBlob, primaryExt, altBlob, altExt, parts) {
     <div class="stat">📄 <strong>${parts.length}</strong> ${lastInputExt === 'vtt' || lastInputExt === 'srt' ? 'cues' : 'parts'}</div>
     <div class="stat">📝 <strong>~${totalWords.toLocaleString()}</strong> words</div>
     <div class="stat">💾 <strong>${(primaryBlob.size / 1024).toFixed(0)} KB</strong></div>
-    <div class="stat">🤖 <strong>${APP.currentMode === 'webllm' ? 'Local (WebGPU)' : APP.currentMode === 'openrouter' ? 'OpenRouter' : 'PPQ.ai'}</strong></div>
+    <div class="stat">🤖 <strong>${APP.currentMode === 'ppq' ? 'PPQ.ai' : ''}</strong></div>
     <div class="stat">🌍 <strong>${LANG_CODES[APP.currentOutputLang] || APP.currentOutputLang}</strong></div>
     <div class="stat">🎚️ <strong>${(T.slider_labels || [])[APP.currentStyleLevel - 1] || ''}</strong></div>
     ${isApi ? `
@@ -349,7 +422,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Herstel opgeslagen API-sleutels
   const orKey  = sessionStorage.getItem('or_key');
   const ppqKey = sessionStorage.getItem('ppq_key');
-  if (orKey)  document.getElementById('openrouter-key').value = orKey;
+  /* OpenRouter key removed */
   if (ppqKey) document.getElementById('ppq-key').value        = ppqKey;
 
   // PDF.js worker
